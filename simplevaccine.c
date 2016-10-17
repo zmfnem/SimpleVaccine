@@ -1,3 +1,15 @@
+// simplevaccine.c
+/****************************************************************************
+파일 명칭 : simplevaccine.c
+기 능 : 디스크에 존재하는 파일 기반 악성코드 탐지를 위한 Simple Vaccine Anti-virus 프로그램 제작
+함수 명칭 : main, OpenDirectory, PrintErrMsg, check, check_result
+출     력 : 탐지한 파일 및 폴더 개수, 걸린 시간, 악성코드 파일 개수 등 출력
+입     력 : 백신프로그램명과 디렉토리명 함께 실행 ex) Vaccine C:\temp
+작 성 자 : 권성준
+작성 일자 : 2016/10/17
+*****************************************************************************/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <io.h>
@@ -25,8 +37,8 @@ void check_result(const char* name);
 int main(int argc, char** argv)
 
 {
-	char *drivedisp = NULL;
-	drivedisp = argv[1];
+	char* drivedisp = NULL;
+	drivedisp = argv[1]; //2번째 인자 drivedisp 포인터 변수에 저장
 
 	if (argc>1)
 	{
@@ -44,10 +56,10 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-void OpenDirectory(const char* drive) // 디레토리, 파일 검색
+void OpenDirectory(const char* drive) // 디렉토리, 파일 검색
 {
 	struct _finddata_t fd;
-	int next = 0;
+	int next = 1;
 	FILE *in;
 	int len;
 	char nextpath[MAX_PATH];
@@ -92,6 +104,7 @@ void OpenDirectory(const char* drive) // 디레토리, 파일 검색
 
 	_findclose(value);
 }
+
 
 void PrintErrMsg() //에러메세지
 {
