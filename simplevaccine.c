@@ -16,8 +16,7 @@
 #include <errno.h>
 #include <string.h>
 
-
-extern int errno;
+#pragma warning(disable:4996)
 
 #ifndef MAX_PATH
 #define MAX_PATH	4096
@@ -26,109 +25,80 @@ extern int errno;
 #define TRUE 1
 #define FALSE 0
 
+extern int errno;
+
 typedef int BOOL;
 
 void OpenDirectory(const char* drive);
-void PrintErrMsg();
 int check(const char* filename);
-void check_result(const char* name);
+void PrintErrMsg();
+//void check_result(const char* name);
 
 
 int main(int argc, char** argv)
-
 {
 	char* drivedisp = NULL;
-	drivedisp = argv[1]; //2번째 인자 drivedisp 포인터 변수에 저장
+	drivedisp = argv[1]; //2번째 인자 drivedisp 포인터 변수에 저장.
 
 	if (argc>1)
 	{
-		OpenDirectory(drivedisp); //디렉토리 검사 함수 호출
+		OpenDirectory(drivedisp); //디렉토리 검사 함수 호출.
 	}
-
-	else
+	else //2번째 인자가 입력되지 않은 경우 프로그램 정보 출력.
 	{
 		printf("프로그램 이름 : %s\n", argv[0]);
 		puts("Copyright 2015 TUgrape Corporation.\n");
 		puts("ver 1.1\n");
 		puts("Maker: tu.Grape team (Sungjun Gwon)");
 	}
-
 	return 0;
 }
 
-void OpenDirectory(const char* drive) // 디렉토리, 파일 검색
+void OpenDirectory(const char* drive) // 디렉토리, 파일 검색 & check 검사 함수 호출.
 {
 	struct _finddata_t fd;
 	int next = 1;
-	FILE *in;
 	int len;
-	char nextpath[MAX_PATH];
+	char nextpath[MAX_PATH] = { NULL };
 
-	long value = _findfirst(drive, &fd); //파일이 디스크에 존재하는지 파악하기 위한 함수
+	strcpy(nextpath, drive);
+	strcat(nextpath, "\\*.*"); // 경로로 받은 문자열에 와일드 카드문자를 붙힘.
 
-	if (value == -1) {
+	long value = _findfirst(nextpath, &fd); // 해당 경로에서 우선 첫번째 파일을 검색 하기 위한 함수.
+
+	if (value == -1) { //파일을 검색 할 수 없다면 에러메세지 출력 후 리턴.
 		PrintErrMsg();
 		return;
 	}
 
-
 	while (next != -1)
 	{
-		if ((fd.attrib & _A_SUBDIR) && fd.name[0] != '.') //서브 디렉토리인지 아닌지 파악 and 루트디렉토리 제외
+		if ((fd.attrib & _A_SUBDIR))  //서브 디렉토리 인지 파악 (찾은 파일이 디렉토리인지 파악한다)
 		{
-			strcpy(nextpath, drive);
+			if (fd.name[0] != '.' && fd.name[0] != '..') // ., .. 디렉토리 제외 (루트디렉토리 제외)
+			{
+				len = strlen(nextpath);
+				strcpy(&nextpath[len - 3], fd.name);
 
-			len = strlen(nextpath);
-			strcpy(&nextpath[len - 3], fd.name);
-
-			strcat(nextpath, "\\*.*");
-			printf("%s\n", nextpath);
-
-			OpenDirectory(nextpath); //재귀호출
+				OpenDirectory(nextpath); //재귀호출
+			}
 		}
 
-		else //File 검사
+		else // 지정된 디렉토리 하위의 모든 File 출력 & 검사함수 호출
 		{
 			strcpy(nextpath, drive);
-
 			len = strlen(nextpath);
 			strcpy(&nextpath[len - 3], fd.name);
-
 			printf("%s\n", nextpath);
 			check((const char*)nextpath); //검사함수 호출
 			printf("\n");
-
 		}
 		next = _findnext(value, &fd);
 	}
-
 	_findclose(value);
 }
 
-
-void PrintErrMsg() //에러메세지
-{
-	switch (errno)
-	{
-	case EINVAL:
-		printf("Invalid parameter: filespec or fileinfo was NULL. Or, the operating system returned an unexpected error.\n");
-		break;
-
-	case ENOENT:
-		printf("File specification that could not be matched.\n");
-		break;
-
-	case ENOMEM:
-		printf("Not enough memory or the file name given was greater than MAX_PATH.\n");
-		break;
-
-	default:
-		printf("Unknown Error\n");
-	}
-}
-
-
-int check(const char* filename) {  //검사
+int check(const char* filename) {  //검사함수 (패턴 비교)
 
 	FILE *in;
 	FILE *on;
@@ -180,4 +150,25 @@ int check(const char* filename) {  //검사
 	free(buffer_f2);
 	fclose(in);
 	fclose(on);
+}
+
+void PrintErrMsg() //에러메세지
+{
+	switch (errno)
+	{
+	case EINVAL:
+		printf("Invalid parameter: filespec or fileinfo was NULL. Or, the operating system returned an unexpected error.\n");
+		break;
+
+	case ENOENT:
+		printf("File specification that could not be matched.\n");
+		break;
+
+	case ENOMEM:
+		printf("Not enough memory or the file name given was greater than MAX_PATH.\n");
+		break;
+
+	default:
+		printf("Unknown Error\n");
+	}
 }
